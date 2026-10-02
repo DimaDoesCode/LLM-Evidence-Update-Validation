@@ -7,6 +7,8 @@ The project focuses on **evidence-driven decision updating**, with particular at
 * reaching the correct final decision;
 * and following a correct decision trajectory as evidence accumulates.
 
+The validation question is related to the broader research area of **belief revision in large language models**, including work on belief revision benchmarks, rational belief-update properties, and anchoring effects in LLM judgments. [1–3]
+
 ---
 
 ## Validation Question
@@ -33,7 +35,11 @@ The validation question is:
 
 > Does the model change its decision at the appropriate point when the evidence changes?
 
-The project therefore evaluates not only the final answer, but also the **trajectory of decisions**.
+The project therefore evaluates not only the final answer, but also the **decision trajectory**.
+
+This is closely related to the problem of **belief revision** studied in recent LLM research. Wilie et al. introduced Belief-R, a benchmark designed to test whether language models appropriately revise conclusions when additional premises require previous inferences to be changed. [1]
+
+More recently, AGM-BENCH framed LLM belief revision in terms of classical rationality postulates and iterated belief revision, providing a more formal approach to evaluating whether updates are performed in a rational manner. [2]
 
 ---
 
@@ -162,6 +168,10 @@ from:
 Decision trajectory correctness
 ```
 
+This distinction is consistent with a broader line of research showing that LLMs can have difficulty updating conclusions appropriately when information changes. Belief-R, for example, evaluates both situations where a previous conclusion should be revised and situations where it should remain unchanged. [1]
+
+The problem is also related to **anchoring**: prior information can influence subsequent LLM judgments even when that information should no longer determine the result. Nguyen reports anchoring effects across several LLMs in forecasting tasks. [3]
+
 ---
 
 ## Validation Scope
@@ -176,12 +186,69 @@ It tests one specific behavioral property:
 
 The dataset is synthetic and the experiment uses a single model configuration.
 
+The experiment should therefore be viewed as a **validation prototype**, rather than as a benchmark of general reasoning ability.
+
+---
+
+## Relation to Existing Research
+
+The project is positioned within the broader problem of **LLM belief revision and evidence-driven updating**, but uses a deliberately simpler validation setup.
+
+### Belief revision
+
+Wilie et al. introduced **Belief-R**, a dataset for evaluating whether LMs revise conclusions when new premises invalidate or modify earlier inferences. Their work emphasizes that models can struggle both with required updates and with situations where an update should *not* occur. [1]
+
+V1 uses the same general idea of sequential information, but translates it into a concrete **decision trajectory**:
+
+```text
+initial decision
+      ↓
+new evidence
+      ↓
+decision update
+      ↓
+confirmation
+```
+
+### Rational belief revision
+
+Jenkins' **AGM-BENCH** approaches the problem from a more formal perspective. It evaluates LLM belief revision against rationality postulates derived from AGM belief revision theory and extends the analysis to iterated revision. [2]
+
+V1 does not attempt to reproduce these formal postulates. Instead, it uses a simpler operational criterion:
+
+```text
+Expected reversal point
+        vs.
+Observed reversal point
+```
+
+This makes the experiment easier to reproduce and directly applicable to sequential decision systems.
+
+### Anchoring
+
+Nguyen's study investigates anchoring effects in LLM-generated forecasts and reports that prior numerical information can influence subsequent model judgments. [3]
+
+While V1 does not explicitly test anchoring, the concept is relevant because a sequential decision system must distinguish between:
+
+```text
+evidence that should remain influential
+```
+
+and:
+
+```text
+previous information that should be superseded by new evidence
+```
+
+This provides a possible direction for future validation experiments.
+
 ---
 
 ## Repository Structure
 
 ```text
 LLM-Evidence-Update-Validation/
+
 │
 ├── data/
 │   └── clear_reversal_v1.csv
@@ -262,6 +329,8 @@ The experiment is limited by:
 
 The experiment is intended as a **validation prototype**, not a general-purpose benchmark.
 
+In particular, the results should not be directly compared numerically with Belief-R or AGM-BENCH. Those studies use different datasets, tasks, evaluation criteria, and model populations. [1, 2]
+
 ---
 
 ## Main Takeaway
@@ -270,9 +339,31 @@ V1 produced an important distinction:
 
 ```text
 Final Decision Accuracy:       100%
+
 Fully Correct Trajectory:       60%
 ```
 
 The model consistently reached the expected final decision, but intermediate decision states were substantially less stable.
 
 This suggests that, for sequential LLM decision systems, **how a decision changes as evidence accumulates can be a distinct validation target from whether the final decision is correct.**
+
+---
+
+## References
+
+**[1]** Wilie, B., Cahyawijaya, S., Ishii, E., He, J., & Fung, P. (2024).
+**Belief Revision: The Adaptability of Large Language Models Reasoning.**
+*Proceedings of the 2024 Conference on Empirical Methods in Natural Language Processing (EMNLP 2024), 10480–10496.*
+DOI: 10.18653/v1/2024.emnlp-main.586
+[ACL Anthology](https://aclanthology.org/2024.emnlp-main.586/)
+
+**[2]** Jenkins, B. (2026).
+**AGM-BENCH: Do Large Language Models Revise Beliefs Rationally?**
+*International Conference on Learning Representations (ICLR 2026).*
+[OpenReview](https://openreview.net/pdf?id=2s1BujG84C)
+
+**[3]** Nguyen, J. K. (2024).
+**Human bias in AI models? Anchoring effects and mitigation strategies in large language models.**
+*Journal of Behavioral and Experimental Finance, 43, 100971.*
+DOI: 10.1016/j.jbef.2024.100971
+[ScienceDirect](https://www.sciencedirect.com/science/article/pii/S2214635024000868)
