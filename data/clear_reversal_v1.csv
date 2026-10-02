@@ -1,0 +1,161 @@
+case_id,stage,evidence,expected_decision,update_type
+CASE_001,E0,"API requests intermittently time out. DB CPU is approximately 90%, and DB query latency has increased from 20–30 ms to 300–400 ms. Application CPU and memory are normal. No recent application deployment or configuration change has been recorded.",DATABASE,INITIAL
+CASE_001,E1,"DB latency increases at exactly the same times as API timeouts. The same DB, queried directly from a maintenance host, is also slow during the incident. No packet loss or abnormal network latency is observed.",DATABASE,NO_CHANGE
+CASE_001,E2,Packet capture shows sustained approximately 35% packet loss between the application servers and the DB subnet. The maintenance host reaches the DB through a different network path and remains stable.,NETWORK,REQUIRED_REVERSAL
+CASE_001,E3,Network monitoring confirms that packet loss coincides with every application timeout. DB health checks from the maintenance host remain normal.,NETWORK,NO_CHANGE
+CASE_002,E0,Requests to the service show intermittent latency and HTTP 500 responses. Network latency between the client and service is elevated. No recent configuration change is recorded.,NETWORK,INITIAL
+CASE_002,E1,"Network latency remains elevated during failed requests, while successful requests use the same route. Packet loss is not observed.",NETWORK,NO_CHANGE
+CASE_002,E2,Application logs show a deterministic NullPointerException in the request handler for exactly the failing request pattern. Network probes remain healthy.,APPLICATION,REQUIRED_REVERSAL
+CASE_002,E3,"The same request fails locally on the application host with the same stack trace, without traversing the production network path.",APPLICATION,NO_CHANGE
+CASE_003,E0,A newly deployed application version starts returning errors immediately after deployment. Application logs contain repeated initialization failures. No database or network anomaly is observed.,APPLICATION,INITIAL
+CASE_003,E1,The same application binary starts successfully in a separate environment using the same database and network services.,APPLICATION,NO_CHANGE
+CASE_003,E2,The failing environment uses a different runtime configuration. One feature flag required during initialization is set to an unsupported value.,CONFIGURATION,REQUIRED_REVERSAL
+CASE_003,E3,Changing the feature flag to the supported value restores normal application startup without changing the application binary.,CONFIGURATION,NO_CHANGE
+CASE_004,E0,A database-backed service becomes significantly slower shortly after a configuration change. The changed connection-pool settings are the main recent difference.,CONFIGURATION,INITIAL
+CASE_004,E1,"Rolling back the connection-pool setting on one instance reduces its latency, while other instances remain slow.",CONFIGURATION,NO_CHANGE
+CASE_004,E2,"An unrelated service using the same database also experiences the same slowdown. DB-side storage latency is elevated, while network and application metrics are normal.",DATABASE,REQUIRED_REVERSAL
+CASE_004,E3,"DB storage I/O returns to normal after a database-side remediation, without further application configuration changes. Both services recover.",DATABASE,NO_CHANGE
+CASE_005,E0,"Transaction processing becomes slow. DB CPU and query latency are elevated, and transactions frequently time out. Application CPU remains normal.",DATABASE,INITIAL
+CASE_005,E1,Slow transactions correlate with high DB latency. Database health checks show elevated query time but no infrastructure failure.,DATABASE,NO_CHANGE
+CASE_005,E2,Application logs reveal malformed SQL generated only for one transaction type. The same database accepts valid versions of the query normally.,APPLICATION,REQUIRED_REVERSAL
+CASE_005,E3,Reproducing the transaction locally generates the same malformed SQL against a healthy database. Correcting the application query removes the failure.,APPLICATION,NO_CHANGE
+CASE_006,E0,One application environment intermittently fails to connect to a dependency. Connection attempts frequently time out.,NETWORK,INITIAL
+CASE_006,E1,"Network latency and packet loss are elevated on the affected path, while other environments remain healthy.",NETWORK,NO_CHANGE
+CASE_006,E2,Network infrastructure monitoring shows the path is healthy. The affected environment uses a different firewall rule and dependency endpoint configuration from healthy environments.,CONFIGURATION,REQUIRED_REVERSAL
+CASE_006,E3,Restoring the endpoint and firewall configuration immediately restores connectivity without network infrastructure changes.,CONFIGURATION,NO_CHANGE
+CASE_007,E0,A background job repeatedly fails while retrieving data from a remote service. Application logs show request failures and retries.,APPLICATION,INITIAL
+CASE_007,E1,"Failures occur only for one job implementation, while another application using the same service succeeds.",APPLICATION,NO_CHANGE
+CASE_007,E2,Packet capture shows repeated TCP retransmissions and packet loss on the route used by the failing application. An alternate network path completes the same requests successfully.,NETWORK,REQUIRED_REVERSAL
+CASE_007,E3,Moving the job to the alternate network path removes the failures without changing application code.,NETWORK,NO_CHANGE
+CASE_008,E0,Application crashes immediately after a configuration or deployment change. No network or database anomaly is observed.,CONFIGURATION,INITIAL
+CASE_008,E1,The crash disappears after restoring the previous configuration on one instance.,CONFIGURATION,NO_CHANGE
+CASE_008,E2,The same application crashes with the original resource configuration when a specific request is processed. The stack trace points to deterministic application logic.,APPLICATION,REQUIRED_REVERSAL
+CASE_008,E3,Applying the application fix removes the crash while keeping the original configuration unchanged.,APPLICATION,NO_CHANGE
+CASE_009,E0,Application experiences database connection failures and elevated query latency. DB health metrics are also degraded.,DATABASE,INITIAL
+CASE_009,E1,Connection failures correlate with periods of elevated DB latency. Network connectivity to the DB remains available.,DATABASE,NO_CHANGE
+CASE_009,E2,"The database is healthy when accessed by another service. The affected service has a different connection-pool configuration, including an excessively low timeout.",CONFIGURATION,REQUIRED_REVERSAL
+CASE_009,E3,Restoring the connection-pool parameters resolves the failures while the database remains unchanged.,CONFIGURATION,NO_CHANGE
+CASE_010,E0,Application intermittently times out while communicating with the database. Network latency is elevated and some connection attempts fail.,NETWORK,INITIAL
+CASE_010,E1,Network probes show intermittent latency spikes coinciding with application timeouts.,NETWORK,NO_CHANGE
+CASE_010,E2,"Database storage I/O becomes saturated and DB query latency increases sharply, while network probes remain normal. Queries from another host show the same database-side slowdown.",DATABASE,REQUIRED_REVERSAL
+CASE_010,E3,Database storage I/O returns to normal and query latency recovers without network changes. Application timeouts disappear.,DATABASE,NO_CHANGE
+CASE_011,E0,Order processing is slow. Database CPU is high and query latency is elevated. Application resources are normal.,DATABASE,INITIAL
+CASE_011,E1,A single request type generates an invalid query before reaching the normal database workload. The same database handles valid queries normally.,APPLICATION,REQUIRED_REVERSAL
+CASE_011,E2,The malformed query can be reproduced locally against a healthy database.,APPLICATION,NO_CHANGE
+CASE_011,E3,Correcting the request-building logic removes the invalid queries and restores processing.,APPLICATION,NO_CHANGE
+CASE_012,E0,Connections to an external service frequently time out. Network latency is elevated on the affected host.,NETWORK,INITIAL
+CASE_012,E1,The network path is healthy from another host. The affected host has a different proxy endpoint and routing configuration.,CONFIGURATION,REQUIRED_REVERSAL
+CASE_012,E2,Applying the known-good endpoint configuration restores connectivity.,CONFIGURATION,NO_CHANGE
+CASE_012,E3,Network monitoring remains normal after the change.,CONFIGURATION,NO_CHANGE
+CASE_013,E0,A reporting application becomes slow after a release. The application logs show longer request durations.,APPLICATION,INITIAL
+CASE_013,E1,"The same queries from two independent clients are slow against the same database, while the application code and host metrics remain normal.",DATABASE,REQUIRED_REVERSAL
+CASE_013,E2,Database storage latency is elevated during the incident.,DATABASE,NO_CHANGE
+CASE_013,E3,Database storage remediation restores query performance.,DATABASE,NO_CHANGE
+CASE_014,E0,One service cannot reliably reach a remote endpoint after a deployment. A recently changed endpoint setting is an obvious suspect.,CONFIGURATION,INITIAL
+CASE_014,E1,"Packet captures show loss and retransmissions on the network path used by the service, while the endpoint configuration is identical to a healthy instance.",NETWORK,REQUIRED_REVERSAL
+CASE_014,E2,The same packet loss appears when the healthy instance uses the affected network path.,NETWORK,NO_CHANGE
+CASE_014,E3,Changing the network route removes the failures.,NETWORK,NO_CHANGE
+CASE_015,E0,Users report intermittent failures and increased latency. Network latency is elevated during incidents.,NETWORK,INITIAL
+CASE_015,E1,"The failing requests contain a specific payload pattern. The same payload fails locally without network access, while ordinary requests succeed over the same route.",APPLICATION,REQUIRED_REVERSAL
+CASE_015,E2,Application tracing identifies a deterministic exception for that payload.,APPLICATION,NO_CHANGE
+CASE_015,E3,A code change removes the exception.,APPLICATION,NO_CHANGE
+CASE_016,E0,Database-backed requests are timing out. Database latency is elevated and initially appears to be the main source of the problem.,DATABASE,INITIAL
+CASE_016,E1,The same database is healthy for other clients. Only this service uses an unusually short connection timeout and aggressive pool limits.,CONFIGURATION,REQUIRED_REVERSAL
+CASE_016,E2,Increasing the timeout removes the failures without changing the database.,CONFIGURATION,NO_CHANGE
+CASE_016,E3,Database metrics remain unchanged after recovery.,CONFIGURATION,NO_CHANGE
+CASE_017,E0,A worker repeatedly fails while downloading objects. The worker logs contain request errors.,APPLICATION,INITIAL
+CASE_017,E1,The same worker succeeds when connected through a different network path. Packet loss is observed only on the original route.,NETWORK,REQUIRED_REVERSAL
+CASE_017,E2,Other workers using the alternate route remain healthy.,NETWORK,NO_CHANGE
+CASE_017,E3,Replacing the route removes the download failures.,NETWORK,NO_CHANGE
+CASE_018,E0,A service becomes slow after a configuration deployment. Connection-pool parameters are the most visible change.,CONFIGURATION,INITIAL
+CASE_018,E1,Multiple independent applications using the same database show the same increase in query latency. Database storage latency is elevated.,DATABASE,REQUIRED_REVERSAL
+CASE_018,E2,Rolling back the service configuration does not remove the slowdown.,DATABASE,NO_CHANGE
+CASE_018,E3,Database remediation restores all affected services.,DATABASE,NO_CHANGE
+CASE_019,E0,Database requests time out and database latency is high. The database initially appears overloaded.,DATABASE,INITIAL
+CASE_019,E1,The database is responsive from another network segment. Packet capture from the affected application shows retransmissions and intermittent packet loss.,NETWORK,REQUIRED_REVERSAL
+CASE_019,E2,Database CPU and storage metrics remain normal when observed independently.,NETWORK,NO_CHANGE
+CASE_019,E3,Restoring the network path eliminates the timeouts.,NETWORK,NO_CHANGE
+CASE_020,E0,"Requests to the database are slow and network latency is elevated, suggesting a possible network problem.",NETWORK,INITIAL
+CASE_020,E1,The same database queries are slow from a local host with no network path to the affected segment. Database storage latency is elevated.,DATABASE,REQUIRED_REVERSAL
+CASE_020,E2,Network probes return to normal while database queries remain slow.,DATABASE,NO_CHANGE
+CASE_020,E3,Database storage recovery restores application performance.,DATABASE,NO_CHANGE
+CASE_021,E0,A new application release fails during startup. Initialization errors are visible in the application log.,APPLICATION,INITIAL
+CASE_021,E1,The application binary starts successfully in another environment.,APPLICATION,NO_CHANGE
+CASE_021,E2,The failing environment has an unsupported runtime setting that is consumed during initialization.,CONFIGURATION,REQUIRED_REVERSAL
+CASE_021,E3,Changing that setting restores startup without changing the application binary.,CONFIGURATION,NO_CHANGE
+CASE_022,E0,Database queries are slow and database CPU is elevated.,DATABASE,INITIAL
+CASE_022,E1,Query latency remains correlated with application timeouts. Database health checks are inconclusive.,DATABASE,NO_CHANGE
+CASE_022,E2,Packet capture reveals sustained loss between the application subnet and database subnet. Direct database access from another segment remains healthy.,NETWORK,REQUIRED_REVERSAL
+CASE_022,E3,Network remediation removes the timeouts while database load returns to normal.,NETWORK,NO_CHANGE
+CASE_023,E0,A service produces intermittent failures. Network latency is elevated during some failures.,NETWORK,INITIAL
+CASE_023,E1,"Packet loss is not consistently observed, and successful requests use the same network path.",NETWORK,NO_CHANGE
+CASE_023,E2,A deterministic exception appears in the request handler for exactly the failing input. The same failure is reproduced locally.,APPLICATION,REQUIRED_REVERSAL
+CASE_023,E3,Fixing the handler removes the failures without network changes.,APPLICATION,NO_CHANGE
+CASE_024,E0,Database-backed processing slows after a configuration change. Connection settings are the most visible difference.,CONFIGURATION,INITIAL
+CASE_024,E1,Rolling back the setting on one instance improves that instance but does not explain failures on other clients.,CONFIGURATION,NO_CHANGE
+CASE_024,E2,Independent services using the same database show the same storage latency increase.,DATABASE,REQUIRED_REVERSAL
+CASE_024,E3,Database remediation restores all services without further configuration changes.,DATABASE,NO_CHANGE
+CASE_025,E0,A transaction service reports errors and slow requests after a deployment.,APPLICATION,INITIAL
+CASE_025,E1,Application CPU and memory are normal. Some requests complete successfully against the same database.,APPLICATION,NO_CHANGE
+CASE_025,E2,The same slow query pattern is reproduced from an independent client. Database storage latency is elevated.,DATABASE,REQUIRED_REVERSAL
+CASE_025,E3,Database remediation removes the slowdown without application changes.,DATABASE,NO_CHANGE
+CASE_026,E0,A service intermittently fails to connect to a dependency. Network latency is elevated on the affected path.,NETWORK,INITIAL
+CASE_026,E1,Other services on the same network segment remain healthy.,NETWORK,NO_CHANGE
+CASE_026,E2,Infrastructure monitoring shows the path is healthy. The failing service uses a different endpoint and firewall configuration from healthy services.,CONFIGURATION,REQUIRED_REVERSAL
+CASE_026,E3,Restoring the known-good configuration immediately restores connectivity.,CONFIGURATION,NO_CHANGE
+CASE_027,E0,An application experiences slow transactions. Database query latency is elevated.,DATABASE,INITIAL
+CASE_027,E1,"Database health checks confirm elevated query latency, but no storage or infrastructure failure is observed.",DATABASE,NO_CHANGE
+CASE_027,E2,Tracing shows that one application code path generates an inefficient query only for a particular transaction.,APPLICATION,REQUIRED_REVERSAL
+CASE_027,E3,Replacing the query removes the performance problem against the same database.,APPLICATION,NO_CHANGE
+CASE_028,E0,A service loses connectivity after a deployment. A changed endpoint configuration is initially suspected.,CONFIGURATION,INITIAL
+CASE_028,E1,The endpoint value matches the value used by healthy instances.,CONFIGURATION,NO_CHANGE
+CASE_028,E2,Packet capture shows loss and retransmissions on the network route used by the affected service.,NETWORK,REQUIRED_REVERSAL
+CASE_028,E3,Moving the service to a healthy route restores connectivity.,NETWORK,NO_CHANGE
+CASE_029,E0,A background worker fails to retrieve remote data. Application logs show repeated request failures.,APPLICATION,INITIAL
+CASE_029,E1,"The same worker succeeds for local test requests, but remote requests continue to fail.",APPLICATION,NO_CHANGE
+CASE_029,E2,Packet capture identifies retransmissions and packet loss only on the production route.,NETWORK,REQUIRED_REVERSAL
+CASE_029,E3,An alternate route removes the failures without code changes.,NETWORK,NO_CHANGE
+CASE_030,E0,Application requests to the database time out. Network latency is elevated.,NETWORK,INITIAL
+CASE_030,E1,"Some network probes are abnormal, but successful database requests continue through the same path.",NETWORK,NO_CHANGE
+CASE_030,E2,Database storage I/O becomes saturated and queries from another host show the same slowdown.,DATABASE,REQUIRED_REVERSAL
+CASE_030,E3,Database storage remediation restores query performance.,DATABASE,NO_CHANGE
+CASE_031,E0,Transactions are slow and database query latency is high.,DATABASE,INITIAL
+CASE_031,E1,Database metrics remain elevated during failed transactions.,DATABASE,NO_CHANGE
+CASE_031,E2,"Another client using the same database observes similar latency, so the database remains a plausible cause.",DATABASE,NO_CHANGE
+CASE_031,E3,Detailed tracing shows that the affected application generates an expensive query only for the failing request. The same query pattern is not present in healthy clients.,APPLICATION,REQUIRED_REVERSAL
+CASE_032,E0,A service intermittently loses connectivity. Network latency is elevated.,NETWORK,INITIAL
+CASE_032,E1,Packet loss is observed during some incidents.,NETWORK,NO_CHANGE
+CASE_032,E2,The affected service remains the only client with the failures while other services use the same network.,NETWORK,NO_CHANGE
+CASE_032,E3,The final configuration audit shows an incorrect proxy endpoint and timeout combination used only by the affected service. Correcting it restores connectivity.,CONFIGURATION,REQUIRED_REVERSAL
+CASE_033,E0,A worker fails while calling a remote service. Application logs contain repeated request errors.,APPLICATION,INITIAL
+CASE_033,E1,The worker has no deterministic exception and succeeds for some requests.,APPLICATION,NO_CHANGE
+CASE_033,E2,"The remote service is healthy from other clients, while the affected worker continues to fail intermittently.",APPLICATION,NO_CHANGE
+CASE_033,E3,Packet capture finally identifies retransmissions and loss on the worker's network path. An alternate route eliminates the failures.,NETWORK,REQUIRED_REVERSAL
+CASE_034,E0,A database-backed application slows after a configuration deployment. Connection-pool settings are suspected.,CONFIGURATION,INITIAL
+CASE_034,E1,Rolling back one configuration value improves a single instance but does not eliminate the broader slowdown.,CONFIGURATION,NO_CHANGE
+CASE_034,E2,Several independent services continue to show high database query latency.,CONFIGURATION,NO_CHANGE
+CASE_034,E3,Database storage monitoring identifies sustained I/O saturation affecting all clients. Database remediation restores performance.,DATABASE,REQUIRED_REVERSAL
+CASE_035,E0,Database requests time out and database latency is elevated.,DATABASE,INITIAL
+CASE_035,E1,"Database CPU is high during incidents, making a database problem plausible.",DATABASE,NO_CHANGE
+CASE_035,E2,"Direct database access from a separate network segment remains responsive, but the application path continues to experience intermittent failures.",DATABASE,NO_CHANGE
+CASE_035,E3,Packet capture on the application path shows sustained loss and retransmissions. The network path is the common difference between successful and failed access.,NETWORK,REQUIRED_REVERSAL
+CASE_036,E0,A new application version fails during startup. Initialization errors are present in the application logs.,APPLICATION,INITIAL
+CASE_036,E1,The same binary starts successfully in a separate environment.,APPLICATION,NO_CHANGE
+CASE_036,E2,"Database and network services are healthy in both environments, but the exact runtime settings have not yet been compared.",APPLICATION,NO_CHANGE
+CASE_036,E3,The failing environment contains an unsupported feature flag value. Changing only that value restores startup.,CONFIGURATION,REQUIRED_REVERSAL
+CASE_037,E0,A web service produces intermittent HTTP errors and elevated network latency.,NETWORK,INITIAL
+CASE_037,E1,"Packet loss is not consistently observed, and some requests succeed through the same network path.",NETWORK,NO_CHANGE
+CASE_037,E2,"The affected requests share a specific input pattern, but no deterministic application failure has yet been established.",NETWORK,NO_CHANGE
+CASE_037,E3,Application tracing identifies a deterministic exception for that input. The same request fails locally without using the production network.,APPLICATION,REQUIRED_REVERSAL
+CASE_038,E0,An application crashes after a deployment. A changed runtime configuration is initially suspected.,CONFIGURATION,INITIAL
+CASE_038,E1,Restoring one configuration value reduces the frequency but does not eliminate the crash.,CONFIGURATION,NO_CHANGE
+CASE_038,E2,The crash occurs only for a particular request and the same application build is otherwise stable.,CONFIGURATION,NO_CHANGE
+CASE_038,E3,A deterministic stack trace identifies an application logic error. The same failure can be reproduced locally with the original configuration.,APPLICATION,REQUIRED_REVERSAL
+CASE_039,E0,A transaction service reports intermittent failures and slow responses after a release.,APPLICATION,INITIAL
+CASE_039,E1,Application resource usage is normal and the failures are not tied to one specific code path.,APPLICATION,NO_CHANGE
+CASE_039,E2,"Database queries show elevated latency, but the evidence does not yet distinguish application and database causes.",APPLICATION,NO_CHANGE
+CASE_039,E3,The same query slowdown is reproduced from an independent client and database storage I/O is saturated. Application logs show no independent failure.,DATABASE,REQUIRED_REVERSAL
+CASE_040,E0,Application requests to the database time out and network latency is elevated.,NETWORK,INITIAL
+CASE_040,E1,Some network probes are abnormal during the incident.,NETWORK,NO_CHANGE
+CASE_040,E2,The application remains affected while network probes mostly recover. Database query latency remains high.,NETWORK,NO_CHANGE
+CASE_040,E3,Independent database access shows the same slowdown and database storage I/O is saturated. Network monitoring is normal at the same time.,DATABASE,REQUIRED_REVERSAL

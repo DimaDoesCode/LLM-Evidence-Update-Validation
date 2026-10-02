@@ -1,0 +1,12 @@
+check,status,details
+Required columns,PASS,Columns match expected schema
+Row count,PASS,160 rows
+Case count,PASS,40 unique cases
+Decision values,PASS,All expected_decision values are valid
+Update types,PASS,All update_type values are valid
+Case-level integrity,PASS,All 40 cases passed structural validation
+Reversal distribution E1,PASS,10 cases
+Reversal distribution E2,PASS,20 cases
+Reversal distribution E3,PASS,10 cases
+Direction diversity,PASS,12 unique reversal directions
+Duplicate rows,PASS,No exact duplicate observations
